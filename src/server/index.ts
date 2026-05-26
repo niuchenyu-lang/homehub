@@ -1,11 +1,21 @@
+import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
 import cors from 'cors';
 import { createServer } from 'http';
+import knex from './db/knex.js';
+import taskRoutes from './routes/tasks.js';
+import shoppingRoutes from './routes/shopping.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Enforce SESSION_SECRET in production
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  console.error('FATAL: SESSION_SECRET is required in production');
+  process.exit(1);
+}
 
 // Security middleware
 app.use(helmet());
@@ -31,20 +41,45 @@ app.use(session({
   }
 }));
 
+// Auth middleware
+function requireAuth(req: any, res: any, next: any) {
+  if (process.env.NODE_ENV !== 'production') {
+    (req.session as any).userId = (req.session as any).userId || 1;
+    return next();
+  }
+  const userId = (req.session as any)?.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  next();
+}
+
+// Run migrations and seeds on startup
+async function runMigrations() {
+  try {
+    await knex.migrate.latest();
+    console.log('Database migrations completed');
+
+    // Run seeds if no members exist
+    const memberCount = await knex('members').count('id as count').first();
+    if (!memberCount || (memberCount as any).count === 0) {
+      await knex.seed.run();
+      console.log('Database seeds completed');
+    }
+  } catch (err) {
+    console.error('Migration failed:', err);
+    process.exit(1);
+  }
+}
+
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', version: process.env.npm_package_version || '0.0.1' });
 });
 
-// TODO: Add API routes
-// app.use('/api/v1/families', familyRoutes);
-// app.use('/api/v1/members', memberRoutes);
-// app.use('/api/v1/tasks', taskRoutes);
-// app.use('/api/v1/shopping', shoppingRoutes);
-// app.use('/api/v1/meals', mealRoutes);
-// app.use('/api/v1/budget', budgetRoutes);
-// app.use('/api/v1/calendar', calendarRoutes);
-// app.use('/api/v1/ai', aiRoutes);
+// API routes (protected)
+app.use('/api/v1/tasks', requireAuth, taskRoutes);
+app.use('/api/v1/shopping', requireAuth, shoppingRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
@@ -56,8 +91,10 @@ if (process.env.NODE_ENV === 'production') {
 
 const server = createServer(app);
 
-server.listen(PORT, () => {
-  console.log(`HomeHub server running on port ${PORT}`);
+runMigrations().then(() => {
+  server.listen(PORT, () => {
+    console.log(`HomeHub server running on port ${PORT}`);
+  });
 });
 
 export default app;

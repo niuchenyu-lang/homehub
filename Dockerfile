@@ -8,8 +8,8 @@ COPY package*.json ./
 COPY src/server/package*.json ./src/server/
 COPY src/client/package*.json ./src/client/
 
-# Install dependencies
-RUN npm ci
+# Install dependencies (npm install since no lock file exists yet)
+RUN npm install
 
 # Copy source
 COPY . .
@@ -17,14 +17,17 @@ COPY . .
 # Build client
 RUN cd src/client && npm run build
 
+# Build server
+RUN cd src/server && npx tsc
+
 # Production stage
 FROM node:22-slim
 
 WORKDIR /app
 
-# Install SQLite dependencies
+# Install SQLite runtime library (not dev headers)
 RUN apt-get update && apt-get install -y \
-    libsqlite3-dev \
+    libsqlite3-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy package files
@@ -32,11 +35,14 @@ COPY package*.json ./
 COPY src/server/package*.json ./src/server/
 
 # Install production dependencies only
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy built assets
 COPY --from=builder /app/src/client/dist ./dist
-COPY --from=builder /app/src/server ./src/server
+COPY --from=builder /app/src/server/dist ./src/server/dist
+COPY --from=builder /app/src/server/package.json ./src/server/package.json
+COPY --from=builder /app/src/server/db/migrations ./src/server/db/migrations
+COPY --from=builder /app/src/server/db/seeds ./src/server/db/seeds
 
 # Create data directory
 RUN mkdir -p /data /backups
