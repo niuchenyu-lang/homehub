@@ -1,8 +1,11 @@
+import 'dotenv/config';
 import express from 'express';
 import session from 'express-session';
 import helmet from 'helmet';
 import cors from 'cors';
 import { createServer } from 'http';
+import knex from './db/knex.js';
+import taskRoutes from './routes/tasks.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,20 +34,31 @@ app.use(session({
   }
 }));
 
+// Run migrations and seeds on startup
+async function runMigrations() {
+  try {
+    await knex.migrate.latest();
+    console.log('Database migrations completed');
+
+    // Run seeds if no members exist
+    const memberCount = await knex('members').count('id as count').first();
+    if (!memberCount || (memberCount as any).count === 0) {
+      await knex.seed.run();
+      console.log('Database seeds completed');
+    }
+  } catch (err) {
+    console.error('Migration failed:', err);
+    process.exit(1);
+  }
+}
+
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', version: process.env.npm_package_version || '0.0.1' });
+  res.json({ status: 'ok', version: '0.0.1' });
 });
 
-// TODO: Add API routes
-// app.use('/api/v1/families', familyRoutes);
-// app.use('/api/v1/members', memberRoutes);
-// app.use('/api/v1/tasks', taskRoutes);
-// app.use('/api/v1/shopping', shoppingRoutes);
-// app.use('/api/v1/meals', mealRoutes);
-// app.use('/api/v1/budget', budgetRoutes);
-// app.use('/api/v1/calendar', calendarRoutes);
-// app.use('/api/v1/ai', aiRoutes);
+// API routes
+app.use('/api/v1/tasks', taskRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
@@ -56,8 +70,10 @@ if (process.env.NODE_ENV === 'production') {
 
 const server = createServer(app);
 
-server.listen(PORT, () => {
-  console.log(`HomeHub server running on port ${PORT}`);
+runMigrations().then(() => {
+  server.listen(PORT, () => {
+    console.log(`HomeHub server running on port ${PORT}`);
+  });
 });
 
 export default app;
