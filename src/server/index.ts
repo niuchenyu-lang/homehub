@@ -6,6 +6,7 @@ import cors from 'cors';
 import { createServer } from 'http';
 import knex from './db/knex.js';
 import taskRoutes from './routes/tasks.js';
+import shoppingRoutes from './routes/shopping.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -59,6 +60,7 @@ app.get('/api/health', (_req, res) => {
 
 // API routes
 app.use('/api/v1/tasks', taskRoutes);
+app.use('/api/v1/shopping', shoppingRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

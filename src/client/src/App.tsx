@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import KanbanBoard from './components/KanbanBoard';
+import ShoppingList from './components/ShoppingList';
 
 interface Member {
   id: number;
@@ -7,13 +8,15 @@ interface Member {
   avatar?: string;
 }
 
+type Page = 'tasks' | 'shopping' | 'meals' | 'budget';
+
 function App() {
   const [familyId] = useState(1);
   const [members, setMembers] = useState<Member[]>([]);
+  const [currentPage, setCurrentPage] = useState<Page>('tasks');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: fetch real members from API
     setMembers([
       { id: 1, name: '爸爸', avatar: '👨' },
       { id: 2, name: '妈妈', avatar: '👩' },
@@ -21,6 +24,13 @@ function App() {
     ]);
     setLoading(false);
   }, []);
+
+  const navItems: { id: Page; label: string; icon: string }[] = [
+    { id: 'tasks', label: '任务', icon: '📋' },
+    { id: 'shopping', label: '购物', icon: '🛒' },
+    { id: 'meals', label: '餐食', icon: '🍽️' },
+    { id: 'budget', label: '预算', icon: '💰' },
+  ];
 
   if (loading) {
     return (
@@ -45,8 +55,45 @@ function App() {
           </div>
         </div>
       </header>
+
+      <nav className="bg-white border-b border-gray-200 px-6">
+        <div className="max-w-7xl mx-auto flex gap-1">
+          {navItems.map(item => (
+            <button
+              key={item.id}
+              onClick={() => setCurrentPage(item.id)}
+              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                currentPage === item.id
+                  ? 'border-blue-600 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              <span className="mr-1">{item.icon}</span>
+              {item.label}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       <main className="max-w-7xl mx-auto px-6 py-6">
-        <KanbanBoard familyId={familyId} members={members} />
+        {currentPage === 'tasks' && (
+          <KanbanBoard familyId={familyId} members={members} />
+        )}
+        {currentPage === 'shopping' && (
+          <ShoppingList familyId={familyId} />
+        )}
+        {currentPage === 'meals' && (
+          <div className="text-center py-20 text-gray-400">
+            <p className="text-4xl mb-2">🍽️</p>
+            <p>餐食规划模块开发中...</p>
+          </div>
+        )}
+        {currentPage === 'budget' && (
+          <div className="text-center py-20 text-gray-400">
+            <p className="text-4xl mb-2">💰</p>
+            <p>预算管理模块开发中...</p>
+          </div>
+        )}
       </main>
     </div>
   );
