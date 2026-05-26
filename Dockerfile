@@ -41,6 +41,8 @@ RUN npm install --omit=dev
 COPY --from=builder /app/src/client/dist ./dist
 COPY --from=builder /app/src/server/dist ./src/server/dist
 COPY --from=builder /app/src/server/package.json ./src/server/package.json
+COPY --from=builder /app/src/server/db/migrations ./src/server/db/migrations
+COPY --from=builder /app/src/server/db/seeds ./src/server/db/seeds
 
 # Create data directory
 RUN mkdir -p /data /backups

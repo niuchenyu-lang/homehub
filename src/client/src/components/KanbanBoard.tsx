@@ -103,7 +103,8 @@ export default function KanbanBoard({ familyId, members }: KanbanBoardProps) {
     }
   };
 
-  const handleUpdateTask = async (taskId: number, taskData: any) => {
+  const handleUpdateTask = async (taskId: number | null, taskData: any) => {
+    if (taskId === null) return;
     setIsLoading(true);
     try {
       const res = await fetch(`/api/v1/tasks/${taskId}`, {
