@@ -82,8 +82,8 @@ router.post('/', async (req, res) => {
     const data = itemCreateSchema.parse(req.body);
 
     // Auto-categorize based on name keywords if not provided
-    let category = data.category;
-    if (!category) {
+    let category: string = data.category || 'other';
+    if (!data.category) {
       category = autoCategorize(data.name);
     }
 

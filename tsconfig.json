@@ -23,5 +23,6 @@
     }
   },
   "include": ["src/**/*"],
+  "exclude": ["src/server"],
   "exclude": ["node_modules", "dist", "build"]
 }
