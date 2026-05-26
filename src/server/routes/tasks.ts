@@ -44,12 +44,13 @@ router.get('/', async (req, res) => {
   try {
     const { family_id, status, priority } = req.query;
 
-    if (!family_id) {
-      return res.status(400).json({ error: 'family_id is required' });
+    const fid = Number(family_id);
+    if (!fid || isNaN(fid) || fid <= 0) {
+      return res.status(400).json({ error: 'family_id is required and must be a positive integer' });
     }
 
     let query = knex('tasks')
-      .where('family_id', Number(family_id));
+      .where('family_id', fid);
 
     if (status) query = query.where('status', status as string);
     if (priority) query = query.where('priority', priority as string);
@@ -122,35 +123,48 @@ router.post('/', async (req, res) => {
 router.patch('/:id/status', async (req, res) => {
   try {
     const taskId = Number(req.params.id);
-    const { status } = req.body;
-
-    if (!['todo', 'doing', 'done'].includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
+    if (isNaN(taskId) || taskId <= 0) {
+      return res.status(400).json({ error: 'Invalid task ID' });
     }
+
+    const statusSchema = z.object({ status: z.enum(['todo', 'doing', 'done']) });
+    const { status } = statusSchema.parse(req.body);
 
     const task = await knex('tasks').where('id', taskId).first();
     if (!task) {
       return res.status(404).json({ error: 'Task not found' });
     }
 
-    // If marking as done, record points
+    // If marking as done, record points atomically
     if (status === 'done' && task.status !== 'done') {
-      const assignees = await knex('task_assignees')
-        .where('task_id', taskId)
-        .select('member_id');
+      await knex.transaction(async (trx) => {
+        // Re-check status inside transaction to prevent race condition
+        const currentTask = await trx('tasks').where('id', taskId).first();
+        if (currentTask.status === 'done') {
+          return; // Already done, another request beat us
+        }
 
-      for (const { member_id } of assignees) {
-        await knex('chore_logs').insert({
-          task_id: taskId,
-          member_id,
-          points_earned: task.points,
-        });
-      }
+        const assignees = await trx('task_assignees')
+          .where('task_id', taskId)
+          .select('member_id');
+
+        for (const { member_id } of assignees) {
+          await trx('chore_logs').insert({
+            task_id: taskId,
+            member_id,
+            points_earned: task.points,
+          });
+        }
+
+        await trx('tasks')
+          .where('id', taskId)
+          .update({ status, updated_at: knex.fn.now() });
+      });
+    } else {
+      await knex('tasks')
+        .where('id', taskId)
+        .update({ status, updated_at: knex.fn.now() });
     }
-
-    await knex('tasks')
-      .where('id', taskId)
-      .update({ status, updated_at: knex.fn.now() });
 
     const updated = await getTaskWithAssignees(taskId);
     res.json(updated);
@@ -164,6 +178,9 @@ router.patch('/:id/status', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const taskId = Number(req.params.id);
+    if (isNaN(taskId) || taskId <= 0) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
     const data = taskUpdateSchema.parse(req.body);
     const { assignee_ids, ...taskData } = data;
 
@@ -204,6 +221,9 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const taskId = Number(req.params.id);
+    if (isNaN(taskId) || taskId <= 0) {
+      return res.status(400).json({ error: 'Invalid task ID' });
+    }
 
     const task = await knex('tasks').where('id', taskId).first();
     if (!task) {
@@ -221,14 +241,14 @@ router.delete('/:id', async (req, res) => {
 // GET /api/v1/tasks/leaderboard?family_id=1
 router.get('/leaderboard', async (req, res) => {
   try {
-    const { family_id } = req.query;
-    if (!family_id) {
-      return res.status(400).json({ error: 'family_id is required' });
+    const fid = Number(req.query.family_id);
+    if (!req.query.family_id || isNaN(fid) || fid <= 0) {
+      return res.status(400).json({ error: 'family_id is required and must be a positive integer' });
     }
 
     const leaderboard = await knex('chore_logs')
       .join('members', 'chore_logs.member_id', 'members.id')
-      .where('members.family_id', Number(family_id))
+      .where('members.family_id', fid)
       .select(
         'members.id',
         'members.name',

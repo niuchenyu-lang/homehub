@@ -11,6 +11,12 @@ import shoppingRoutes from './routes/shopping.js';
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Enforce SESSION_SECRET in production
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  console.error('FATAL: SESSION_SECRET is required in production');
+  process.exit(1);
+}
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -35,6 +41,19 @@ app.use(session({
   }
 }));
 
+// Auth middleware
+function requireAuth(req: any, res: any, next: any) {
+  if (process.env.NODE_ENV !== 'production') {
+    (req.session as any).userId = (req.session as any).userId || 1;
+    return next();
+  }
+  const userId = (req.session as any)?.userId;
+  if (!userId) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  next();
+}
+
 // Run migrations and seeds on startup
 async function runMigrations() {
   try {
@@ -55,12 +74,12 @@ async function runMigrations() {
 
 // Health check
 app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', version: '0.0.1' });
+  res.json({ status: 'ok', version: process.env.npm_package_version || '0.0.1' });
 });
 
-// API routes
-app.use('/api/v1/tasks', taskRoutes);
-app.use('/api/v1/shopping', shoppingRoutes);
+// API routes (protected)
+app.use('/api/v1/tasks', requireAuth, taskRoutes);
+app.use('/api/v1/shopping', requireAuth, shoppingRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

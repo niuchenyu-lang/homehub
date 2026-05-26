@@ -68,7 +68,7 @@ export default function TaskCard({
 
       <h4 className="font-medium text-gray-800 mb-1 text-sm">{task.title}</h4>
       {task.description && (
-        <p className="text-xs text-gray-500 mb-2 line-clamp-2">{task.description}</p>
+        <p className="text-sm text-gray-500 mb-2 line-clamp-2">{task.description}</p>
       )}
 
       {dueInfo && (

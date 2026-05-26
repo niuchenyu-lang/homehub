@@ -36,13 +36,13 @@ const CATEGORY_ORDER = ['produce', 'meat', 'dairy', 'bakery', 'frozen', 'pantry'
 // GET /api/v1/shopping?family_id=1
 router.get('/', async (req, res) => {
   try {
-    const { family_id } = req.query;
-    if (!family_id) {
-      return res.status(400).json({ error: 'family_id is required' });
+    const familyId = Number(req.query.family_id);
+    if (!familyId || isNaN(familyId) || familyId <= 0) {
+      return res.status(400).json({ error: 'family_id is required and must be a positive integer' });
     }
 
     const items = await knex('shopping_items')
-      .where('family_id', Number(family_id))
+      .where('family_id', familyId)
       .orderBy([
         { column: 'checked', order: 'asc' },
         { column: 'category', order: 'asc' },
@@ -108,7 +108,12 @@ router.post('/', async (req, res) => {
 router.patch('/:id/check', async (req, res) => {
   try {
     const itemId = Number(req.params.id);
-    const { checked } = req.body;
+    if (isNaN(itemId) || itemId <= 0) {
+      return res.status(400).json({ error: 'Invalid item ID' });
+    }
+
+    const checkSchema = z.object({ checked: z.boolean() });
+    const { checked } = checkSchema.parse(req.body);
 
     const item = await knex('shopping_items').where('id', itemId).first();
     if (!item) {
@@ -130,6 +135,9 @@ router.patch('/:id/check', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const itemId = Number(req.params.id);
+    if (isNaN(itemId) || itemId <= 0) {
+      return res.status(400).json({ error: 'Invalid item ID' });
+    }
     const data = itemUpdateSchema.parse(req.body);
 
     const item = await knex('shopping_items').where('id', itemId).first();
@@ -154,6 +162,9 @@ router.put('/:id', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const itemId = Number(req.params.id);
+    if (isNaN(itemId) || itemId <= 0) {
+      return res.status(400).json({ error: 'Invalid item ID' });
+    }
 
     const item = await knex('shopping_items').where('id', itemId).first();
     if (!item) {
