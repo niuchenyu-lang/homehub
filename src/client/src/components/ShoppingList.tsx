@@ -42,7 +42,7 @@ export default function ShoppingList({ familyId }: ShoppingListProps) {
 
   const fetchItems = async () => {
     try {
-      const res = await fetch(`/api/v1/shopping?family_id=${familyId}`);
+      const res = await fetch(`/api/v1/shopping?family_id=${familyId}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setItems(data.items || []);
@@ -65,6 +65,7 @@ export default function ShoppingList({ familyId }: ShoppingListProps) {
     try {
       const res = await fetch('/api/v1/shopping', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           family_id: familyId,
@@ -89,6 +90,7 @@ export default function ShoppingList({ familyId }: ShoppingListProps) {
     try {
       const res = await fetch(`/api/v1/shopping/${itemId}/check`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ checked: !checked }),
       });
@@ -104,6 +106,7 @@ export default function ShoppingList({ familyId }: ShoppingListProps) {
     try {
       const res = await fetch(`/api/v1/shopping/${itemId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (res.ok) {
         await fetchItems();
@@ -118,6 +121,7 @@ export default function ShoppingList({ familyId }: ShoppingListProps) {
     try {
       const res = await fetch(`/api/v1/shopping?family_id=${familyId}&checked=1`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (res.ok) {
         await fetchItems();

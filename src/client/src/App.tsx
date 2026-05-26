@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import KanbanBoard from './components/KanbanBoard';
 import ShoppingList from './components/ShoppingList';
 
@@ -10,11 +11,28 @@ interface Member {
 
 type Page = 'tasks' | 'shopping' | 'meals' | 'budget';
 
+const PATH_TO_PAGE: Record<string, Page> = {
+  '/': 'tasks',
+  '/tasks': 'tasks',
+  '/shopping': 'shopping',
+  '/meals': 'meals',
+  '/budget': 'budget',
+};
+
+const PAGE_TO_PATH: Record<Page, string> = {
+  tasks: '/tasks',
+  shopping: '/shopping',
+  meals: '/meals',
+  budget: '/budget',
+};
+
 function App() {
   const [familyId] = useState(1);
   const [members, setMembers] = useState<Member[]>([]);
   const [currentPage, setCurrentPage] = useState<Page>('tasks');
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     setMembers([
@@ -24,6 +42,13 @@ function App() {
     ]);
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    const page = PATH_TO_PAGE[location.pathname];
+    if (page && page !== currentPage) {
+      setCurrentPage(page);
+    }
+  }, [location.pathname]);
 
   const navItems: { id: Page; label: string; icon: string }[] = [
     { id: 'tasks', label: '任务', icon: '📋' },
@@ -61,7 +86,10 @@ function App() {
           {navItems.map(item => (
             <button
               key={item.id}
-              onClick={() => setCurrentPage(item.id)}
+              onClick={() => {
+                setCurrentPage(item.id);
+                navigate(PAGE_TO_PATH[item.id]);
+              }}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 currentPage === item.id
                   ? 'border-blue-600 text-blue-600'
