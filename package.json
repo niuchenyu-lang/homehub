@@ -1,0 +1,32 @@
+{
+  "name": "homehub",
+  "version": "0.0.1",
+  "description": "AI驱动的自托管家庭规划中心",
+  "private": true,
+  "workspaces": [
+    "src/server",
+    "src/client"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd src/server && npm run dev",
+    "dev:client": "cd src/client && npm run dev",
+    "build": "cd src/client && npm run build",
+    "start": "cd src/server && npm start",
+    "test": "npm run test:server && npm run test:client",
+    "test:server": "cd src/server && npm test",
+    "test:client": "cd src/client && npm test",
+    "lint": "eslint . --ext .ts,.tsx",
+    "db:migrate": "cd src/server && npx knex migrate:latest",
+    "db:seed": "cd src/server && npx knex seed:run"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.57.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
