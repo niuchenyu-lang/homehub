@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import KanbanBoard from './components/KanbanBoard';
 import ShoppingList from './components/ShoppingList';
 import Calendar from './components/Calendar';
+import Budget from './components/Budget';
 
 interface Member {
   id: number;
@@ -124,10 +125,7 @@ function App() {
           </div>
         )}
         {currentPage === 'budget' && (
-          <div className="text-center py-20 text-gray-400">
-            <p className="text-4xl mb-2">💰</p>
-            <p>预算管理模块开发中...</p>
-          </div>
+          <Budget familyId={familyId} members={members} />
         )}
       </main>
     </div>
