@@ -98,7 +98,7 @@ export default function Meals({ familyId, members }: { familyId: number; members
 
   const weekDays = useMemo(() => {
     const days = [];
-    for (let i = 0; i < 7; i++) {
+    for (let i = 0; i < 28; i++) {
       days.push(addDays(weekStart, i));
     }
     return days;
@@ -267,6 +267,31 @@ export default function Meals({ familyId, members }: { familyId: number; members
     }
   }
 
+  async function addRecipeToShopping(recipe: Recipe) {
+    if (!recipe.ingredients || recipe.ingredients.length === 0) {
+      alert('该食谱没有食材');
+      return;
+    }
+    try {
+      for (const ing of recipe.ingredients) {
+        await fetch('/api/v1/shopping', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            family_id: familyId,
+            name: ing.name,
+            quantity: ing.amount ? `${ing.amount}${ing.unit || ''}` : undefined,
+            category: '食材',
+          }),
+        });
+      }
+      alert(`已将 ${recipe.ingredients.length} 种食材加入购物清单`);
+    } catch (err) {
+      console.error('Add to shopping error:', err);
+      alert('添加失败');
+    }
+  }
+
   function getPlanForDay(dateStr: string, type: string) {
     return plans.find((p) => p.plan_date === dateStr && p.meal_type === type);
   }
@@ -339,7 +364,7 @@ export default function Meals({ familyId, members }: { familyId: number; members
                 ←
               </button>
               <span className="text-sm font-medium text-gray-700">
-                {formatDate(weekStart)} ~ {formatDate(addDays(weekStart, 6))}
+                {formatDate(weekStart)} ~ {formatDate(addDays(weekStart, 27))}
               </span>
               <button
                 onClick={() => setWeekStart((w) => addDays(w, 7))}
@@ -443,6 +468,13 @@ export default function Meals({ familyId, members }: { familyId: number; members
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="font-bold text-gray-800">{recipe.name}</h3>
                     <div className="flex gap-1">
+                      <button
+                        onClick={() => addRecipeToShopping(recipe)}
+                        className="p-1 text-gray-400 hover:text-green-600 text-xs"
+                        title="加入购物清单"
+                      >
+                        🛒
+                      </button>
                       <button
                         onClick={() => editRecipe(recipe)}
                         className="p-1 text-gray-400 hover:text-blue-600 text-xs"
