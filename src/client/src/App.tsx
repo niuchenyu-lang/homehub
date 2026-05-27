@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import KanbanBoard from './components/KanbanBoard';
 import ShoppingList from './components/ShoppingList';
+import Calendar from './components/Calendar';
 
 interface Member {
   id: number;
@@ -9,12 +10,13 @@ interface Member {
   avatar?: string;
 }
 
-type Page = 'tasks' | 'shopping' | 'meals' | 'budget';
+type Page = 'tasks' | 'shopping' | 'calendar' | 'meals' | 'budget';
 
 const PATH_TO_PAGE: Record<string, Page> = {
   '/': 'tasks',
   '/tasks': 'tasks',
   '/shopping': 'shopping',
+  '/calendar': 'calendar',
   '/meals': 'meals',
   '/budget': 'budget',
 };
@@ -22,6 +24,7 @@ const PATH_TO_PAGE: Record<string, Page> = {
 const PAGE_TO_PATH: Record<Page, string> = {
   tasks: '/tasks',
   shopping: '/shopping',
+  calendar: '/calendar',
   meals: '/meals',
   budget: '/budget',
 };
@@ -53,6 +56,7 @@ function App() {
   const navItems: { id: Page; label: string; icon: string }[] = [
     { id: 'tasks', label: '任务', icon: '📋' },
     { id: 'shopping', label: '购物', icon: '🛒' },
+    { id: 'calendar', label: '日历', icon: '📅' },
     { id: 'meals', label: '餐食', icon: '🍽️' },
     { id: 'budget', label: '预算', icon: '💰' },
   ];
@@ -109,6 +113,9 @@ function App() {
         )}
         {currentPage === 'shopping' && (
           <ShoppingList familyId={familyId} />
+        )}
+        {currentPage === 'calendar' && (
+          <Calendar familyId={familyId} members={members} />
         )}
         {currentPage === 'meals' && (
           <div className="text-center py-20 text-gray-400">
