@@ -1,0 +1,33 @@
+@media (max-width: 768px) {
+  .kanban-board {
+    flex-direction: column !important;
+  }
+  .kanban-column {
+    width: 100% !important;
+    margin-bottom: 1rem;
+  }
+  .budget-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .meal-week-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .calendar-week-grid {
+    grid-template-columns: repeat(7, 1fr) !important;
+    font-size: 0.7rem;
+  }
+  .calendar-day-cell {
+    min-height: 60px !important;
+    padding: 2px !important;
+  }
+  .modal-content {
+    width: 95% !important;
+    max-height: 85vh !important;
+  }
+  .header-title {
+    font-size: 1.1rem !important;
+  }
+  .header-members {
+    display: none !important;
+  }
+}
