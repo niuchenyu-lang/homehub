@@ -4,6 +4,13 @@ interface Member {
   avatar?: string;
 }
 
+interface Subtask {
+  id: number;
+  title: string;
+  status: 'todo' | 'doing' | 'done';
+  assignees: Member[];
+}
+
 interface Task {
   id: number;
   title: string;
@@ -13,6 +20,7 @@ interface Task {
   due_date?: string;
   points: number;
   assignees: Member[];
+  subtasks?: Subtask[];
 }
 
 interface TaskCardProps {
@@ -22,6 +30,7 @@ interface TaskCardProps {
   onDelete: (taskId: number) => void;
   priorityColors: Record<string, string>;
   priorityLabels: Record<string, string>;
+  onAddSubtask?: (parentId: number) => void;
 }
 
 export default function TaskCard({
@@ -31,6 +40,7 @@ export default function TaskCard({
   onDelete,
   priorityColors,
   priorityLabels,
+  onAddSubtask,
 }: TaskCardProps) {
   const nextStatus: Record<Task['status'], Task['status']> = {
     todo: 'doing',
@@ -89,6 +99,28 @@ export default function TaskCard({
         </div>
       )}
 
+      {task.subtasks && task.subtasks.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {task.subtasks.map((sub) => (
+            <div key={sub.id} className="flex items-center gap-2 text-xs">
+              <button
+                onClick={() => onStatusChange(sub.id, nextStatus[sub.status])}
+                className={`w-4 h-4 rounded border ${
+                  sub.status === 'done'
+                    ? 'bg-green-500 border-green-500 text-white'
+                    : 'border-gray-300'
+                } flex items-center justify-center`}
+              >
+                {sub.status === 'done' && '✓'}
+              </button>
+              <span className={sub.status === 'done' ? 'line-through text-gray-400' : 'text-gray-600'}>
+                {sub.title}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-100">
         <button
           onClick={() => onStatusChange(task.id, nextStatus[task.status])}
@@ -102,6 +134,14 @@ export default function TaskCard({
         >
           编辑
         </button>
+        {onAddSubtask && (
+          <button
+            onClick={() => onAddSubtask(task.id)}
+            className="text-xs px-2 py-1 text-blue-500 hover:text-blue-700"
+          >
+            +子任务
+          </button>
+        )}
         <button
           onClick={() => onDelete(task.id)}
           className="text-xs px-2 py-1 text-red-400 hover:text-red-600 ml-auto"

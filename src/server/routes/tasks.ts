@@ -14,6 +14,9 @@ const taskCreateSchema = z.object({
   due_date: z.string().datetime().optional().nullable(),
   assignee_ids: z.array(z.number().int().positive()).optional(),
   points: z.number().int().min(1).max(100).optional(),
+  parent_id: z.number().int().positive().optional().nullable(),
+  recurrence_rule: z.string().max(100).optional().nullable(),
+  recurrence_end: z.string().datetime().optional().nullable(),
 });
 
 const taskUpdateSchema = z.object({
@@ -24,9 +27,12 @@ const taskUpdateSchema = z.object({
   due_date: z.string().datetime().optional().nullable(),
   assignee_ids: z.array(z.number().int().positive()).optional(),
   points: z.number().int().min(1).max(100).optional(),
+  parent_id: z.number().int().positive().optional().nullable(),
+  recurrence_rule: z.string().max(100).optional().nullable(),
+  recurrence_end: z.string().datetime().optional().nullable(),
 });
 
-// Helper: build task with assignees
+// Helper: build task with assignees and subtasks
 async function getTaskWithAssignees(taskId: number) {
   const task = await knex('tasks').where('id', taskId).first();
   if (!task) return null;
@@ -36,7 +42,32 @@ async function getTaskWithAssignees(taskId: number) {
     .where('task_assignees.task_id', taskId)
     .select('members.id', 'members.name', 'members.avatar', 'members.color');
 
-  return { ...task, assignees };
+  const subtasks = await knex('tasks')
+    .where('parent_id', taskId)
+    .orderBy('created_at', 'asc');
+
+  const subtaskIds = subtasks.map((s: any) => s.id);
+  const subAssignees = subtaskIds.length > 0
+    ? await knex('task_assignees')
+        .join('members', 'task_assignees.member_id', 'members.id')
+        .whereIn('task_assignees.task_id', subtaskIds)
+        .select('task_assignees.task_id', 'members.id', 'members.name', 'members.avatar')
+    : [];
+
+  const subAssigneeMap = new Map();
+  for (const a of subAssignees) {
+    if (!subAssigneeMap.has(a.task_id)) subAssigneeMap.set(a.task_id, []);
+    subAssigneeMap.get(a.task_id).push({ id: a.id, name: a.name, avatar: a.avatar });
+  }
+
+  return {
+    ...task,
+    assignees,
+    subtasks: subtasks.map((s: any) => ({
+      ...s,
+      assignees: subAssigneeMap.get(s.id) || [],
+    })),
+  };
 }
 
 // GET /api/v1/tasks?family_id=1&status=todo
@@ -50,7 +81,8 @@ router.get('/', async (req, res) => {
     }
 
     let query = knex('tasks')
-      .where('family_id', fid);
+      .where('family_id', fid)
+      .whereNull('parent_id');
 
     if (status) query = query.where('status', status as string);
     if (priority) query = query.where('priority', priority as string);
@@ -75,9 +107,35 @@ router.get('/', async (req, res) => {
       assigneeMap.get(a.task_id).push({ id: a.id, name: a.name, avatar: a.avatar });
     }
 
+    // Load subtasks
+    const subtasks = taskIds.length > 0
+      ? await knex('tasks').whereIn('parent_id', taskIds).orderBy('created_at', 'asc')
+      : [];
+
+    const subtaskIds = subtasks.map((s: any) => s.id);
+    const subAssignees = subtaskIds.length > 0
+      ? await knex('task_assignees')
+          .join('members', 'task_assignees.member_id', 'members.id')
+          .whereIn('task_assignees.task_id', subtaskIds)
+          .select('task_assignees.task_id', 'members.id', 'members.name', 'members.avatar')
+      : [];
+
+    const subAssigneeMap = new Map();
+    for (const a of subAssignees) {
+      if (!subAssigneeMap.has(a.task_id)) subAssigneeMap.set(a.task_id, []);
+      subAssigneeMap.get(a.task_id).push({ id: a.id, name: a.name, avatar: a.avatar });
+    }
+
+    const subtaskMap = new Map();
+    for (const s of subtasks) {
+      if (!subtaskMap.has(s.parent_id)) subtaskMap.set(s.parent_id, []);
+      subtaskMap.get(s.parent_id).push({ ...s, assignees: subAssigneeMap.get(s.id) || [] });
+    }
+
     const tasksWithAssignees = tasks.map((t: any) => ({
       ...t,
       assignees: assigneeMap.get(t.id) || [],
+      subtasks: subtaskMap.get(t.id) || [],
     }));
 
     res.json({ tasks: tasksWithAssignees });

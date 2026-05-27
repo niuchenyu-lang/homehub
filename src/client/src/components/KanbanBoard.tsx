@@ -8,6 +8,13 @@ interface Member {
   avatar?: string;
 }
 
+interface Subtask {
+  id: number;
+  title: string;
+  status: 'todo' | 'doing' | 'done';
+  assignees: Member[];
+}
+
 interface Task {
   id: number;
   title: string;
@@ -17,6 +24,7 @@ interface Task {
   due_date?: string;
   points: number;
   assignees: Member[];
+  subtasks?: Subtask[];
 }
 
 interface KanbanBoardProps {
@@ -146,6 +154,22 @@ export default function KanbanBoard({ familyId, members }: KanbanBoardProps) {
     setIsModalOpen(true);
   };
 
+  const handleCreateSubtask = async (parentId: number) => {
+    const title = prompt('子任务名称:');
+    if (!title) return;
+    try {
+      const res = await fetch('/api/v1/tasks', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ family_id: familyId, title, parent_id: parentId, status: 'todo' }),
+      });
+      if (res.ok) await fetchTasks();
+    } catch (err) {
+      console.error('Failed to create subtask:', err);
+    }
+  };
+
   const getColumnTasks = (status: Task['status']) =>
     tasks.filter((t) => t.status === status);
 
@@ -185,6 +209,7 @@ export default function KanbanBoard({ familyId, members }: KanbanBoardProps) {
                   onStatusChange={handleStatusChange}
                   onEdit={openEditModal}
                   onDelete={handleDeleteTask}
+                  onAddSubtask={handleCreateSubtask}
                   priorityColors={PRIORITY_COLORS}
                   priorityLabels={PRIORITY_LABELS}
                 />
