@@ -4,6 +4,7 @@ import KanbanBoard from './components/KanbanBoard';
 import ShoppingList from './components/ShoppingList';
 import Calendar from './components/Calendar';
 import Budget from './components/Budget';
+import Meals from './components/Meals';
 
 interface Member {
   id: number;
@@ -119,10 +120,7 @@ function App() {
           <Calendar familyId={familyId} members={members} />
         )}
         {currentPage === 'meals' && (
-          <div className="text-center py-20 text-gray-400">
-            <p className="text-4xl mb-2">🍽️</p>
-            <p>餐食规划模块开发中...</p>
-          </div>
+          <Meals familyId={familyId} members={members} />
         )}
         {currentPage === 'budget' && (
           <Budget familyId={familyId} members={members} />
