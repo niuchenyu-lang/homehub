@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.1.0.1] - 2026-05-27
+
+### Fixed
+- TailwindCSS 编译：添加 PostCSS 配置文件，修复生产构建样式丢失
+- Session Cookie 认证：同步前端路由守卫与后端认证状态，修复页面刷新后登录态丢失
+- API 请求凭据：为所有 fetch 调用添加 `credentials: 'include'`，确保跨域场景下 cookie 正确传递
+
+### Changed
+- `.gitignore`：忽略 `.gstack` 目录（QA 测试产物）
+
 ## [0.1.0.0] - 2026-05-26
 
 ### Added
