@@ -323,8 +323,8 @@ export default function Budget({ familyId, members }: BudgetProps) {
               </div>
               <div className="flex justify-between text-xs text-gray-500">
                 <span>{cat.percentage}%</span>
-                <span className={cat.remaining < 0 ? 'text-red-500' : ''}>
-                  剩余 ¥{cat.remaining}
+                <span className={(cat.remaining ?? 0) < 0 ? 'text-red-500' : ''}>
+                  剩余 ¥{cat.remaining ?? 0}
                 </span>
               </div>
             </div>
