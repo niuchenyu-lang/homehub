@@ -9,6 +9,7 @@ import taskRoutes from './routes/tasks.js';
 import shoppingRoutes from './routes/shopping.js';
 import eventRoutes from './routes/events.js';
 import budgetRoutes from './routes/budget.js';
+import mealRoutes from './routes/meals.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -74,6 +75,7 @@ app.use('/api/v1/tasks', requireAuth, taskRoutes);
 app.use('/api/v1/shopping', requireAuth, shoppingRoutes);
 app.use('/api/v1/events', requireAuth, eventRoutes);
 app.use('/api/v1/budget', requireAuth, budgetRoutes);
+app.use('/api/v1/meals', requireAuth, mealRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {

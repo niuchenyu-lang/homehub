@@ -1,6 +1,6 @@
 {
   "name": "homehub",
-  "version": "0.3.0.0",
+  "version": "0.4.0.0",
   "description": "AI驱动的自托管家庭规划中心",
   "private": true,
   "workspaces": [
