@@ -7,6 +7,7 @@ import { createServer } from 'http';
 import knex from './db/knex.js';
 import taskRoutes from './routes/tasks.js';
 import shoppingRoutes from './routes/shopping.js';
+import eventRoutes from './routes/events.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -70,6 +71,7 @@ app.get('/api/health', (_req, res) => {
 // API routes (protected)
 app.use('/api/v1/tasks', requireAuth, taskRoutes);
 app.use('/api/v1/shopping', requireAuth, shoppingRoutes);
+app.use('/api/v1/events', requireAuth, eventRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
