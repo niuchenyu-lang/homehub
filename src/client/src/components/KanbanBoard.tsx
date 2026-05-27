@@ -52,7 +52,7 @@ export default function KanbanBoard({ familyId, members }: KanbanBoardProps) {
 
   const fetchTasks = async () => {
     try {
-      const res = await fetch(`/api/v1/tasks?family_id=${familyId}`);
+      const res = await fetch(`/api/v1/tasks?family_id=${familyId}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setTasks(data.tasks || []);
@@ -73,6 +73,7 @@ export default function KanbanBoard({ familyId, members }: KanbanBoardProps) {
     try {
       const res = await fetch(`/api/v1/tasks/${taskId}/status`, {
         method: 'PATCH',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus }),
       });
@@ -89,6 +90,7 @@ export default function KanbanBoard({ familyId, members }: KanbanBoardProps) {
     try {
       const res = await fetch('/api/v1/tasks', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...taskData, family_id: familyId }),
       });
@@ -109,6 +111,7 @@ export default function KanbanBoard({ familyId, members }: KanbanBoardProps) {
     try {
       const res = await fetch(`/api/v1/tasks/${taskId}`, {
         method: 'PUT',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData),
       });
@@ -128,6 +131,7 @@ export default function KanbanBoard({ familyId, members }: KanbanBoardProps) {
     try {
       const res = await fetch(`/api/v1/tasks/${taskId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       if (res.ok) {
         await fetchTasks();

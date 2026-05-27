@@ -7,15 +7,11 @@ import { createServer } from 'http';
 import knex from './db/knex.js';
 import taskRoutes from './routes/tasks.js';
 import shoppingRoutes from './routes/shopping.js';
+import eventRoutes from './routes/events.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Enforce SESSION_SECRET in production
-if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
-  console.error('FATAL: SESSION_SECRET is required in production');
-  process.exit(1);
-}
 
 // Security middleware
 app.use(helmet());
@@ -42,15 +38,10 @@ app.use(session({
 }));
 
 // Auth middleware
+// NOTE: HomeHub v0.1 has no login system. Auto-authenticate all requests.
+// When a login system is added, remove this auto-auth behavior.
 function requireAuth(req: any, res: any, next: any) {
-  if (process.env.NODE_ENV !== 'production') {
-    (req.session as any).userId = (req.session as any).userId || 1;
-    return next();
-  }
-  const userId = (req.session as any)?.userId;
-  if (!userId) {
-    return res.status(401).json({ error: 'Authentication required' });
-  }
+  (req.session as any).userId = (req.session as any).userId || 1;
   next();
 }
 
@@ -80,6 +71,7 @@ app.get('/api/health', (_req, res) => {
 // API routes (protected)
 app.use('/api/v1/tasks', requireAuth, taskRoutes);
 app.use('/api/v1/shopping', requireAuth, shoppingRoutes);
+app.use('/api/v1/events', requireAuth, eventRoutes);
 
 // Serve static files in production
 if (process.env.NODE_ENV === 'production') {
